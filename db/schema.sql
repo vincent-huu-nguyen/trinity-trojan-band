@@ -1,0 +1,1 @@
+printf '%s\n' "-- Supabase schema in SQL editor" 
