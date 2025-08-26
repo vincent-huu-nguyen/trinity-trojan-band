@@ -2,8 +2,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+type Tab = "users" | "events" | "sponsors" | "newsletters" | "export";
+
 export default function Admin() {
   const [ok, setOk] = useState<boolean | null>(null);
+  const [tab, setTab] = useState<Tab>("users");
 
   useEffect(() => {
     (async () => {
@@ -14,13 +17,31 @@ export default function Admin() {
     })();
   }, []);
 
-  if (ok === null) return null;           // spinner
-  if (!ok) return <p>Unauthorized</p>;    // RLS still protects the data
+  if (ok === null) return null;
+  if (!ok) return <p className="text-red-300">Unauthorized</p>;
 
   return (
-    <div className="p-6">
+    <section className="grid gap-4">
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-      {/* Tabs: Users / Events / Sponsors / Newsletters / Export */}
-    </div>
+      <div className="flex gap-2">
+        {(["users","events","sponsors","newsletters","export"] as Tab[]).map(t => (
+          <button key={t} onClick={()=>setTab(t)}
+                  className={`rounded px-3 py-1 ${tab===t ? "bg-ttred" : "bg-white/10"}`}>{t}</button>
+        ))}
+      </div>
+      {tab === "export" && <ExportUsers />}
+      {/* TODO: build tables/forms for Users/Events/Sponsors/Newsletters */}
+    </section>
   );
+}
+
+function ExportUsers() {
+  const run = async () => {
+    const r = await fetch("/api/export/users");
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "profiles.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+  return <button onClick={run} className="rounded bg-ttred px-4 py-2 font-semibold">Download Users CSV</button>;
 }
